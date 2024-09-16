@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
 import { api } from "@/services/api";
 import { createContext, useEffect, useState } from "react";
@@ -17,7 +18,15 @@ export const AuthProvider = ({ children }) => {
       const storageToken = localStorage.getItem("@Auth:token");
 
       if (storageToken && storageUser) {
-        setUser(JSON.parse(storageUser));
+        const decodedToken = jwtDecode(storageToken);
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        if (decodedToken.exp < currentTime) {
+          signOut();
+        } else {
+          setUser(JSON.parse(storageUser));
+          api.defaults.headers.common["Authorization"] = `Bearer ${storageToken}`;
+        }
       }
     };
     loadingStoreData();
@@ -34,27 +43,32 @@ export const AuthProvider = ({ children }) => {
         throw new Error(response);
       } else {
         const decoded = jwtDecode(response.data.token);
-        
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (decoded.exp < currentTime) {
+          throw new Error("Token expirado. Por favor, faça login novamente.");
+        }
+
         setUser({ id: decoded.userID, username: decoded.username });
         
         api.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${response.data.token}`;
-        localStorage.setItem("@Auth:token", JSON.stringify(response.data.token));
+        localStorage.setItem("@Auth:token", response.data.token);
         localStorage.setItem("@Auth:user", JSON.stringify({ id: decoded.userID, username: decoded.username }));
 
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
       }
       navigate("/");
     } catch (error) {
-      throw new Error(error.response.data.message);
+      throw new Error(error.response?.data?.message || error.message);
     }
   };
 
   const signOut = () => {
     localStorage.clear();
     setUser(null);
-    navigate("/");
+    navigate("/login");
   };
 
   return (
