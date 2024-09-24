@@ -72,6 +72,18 @@ const DatasetTable = () => {
         cell: ({ row }) => row.original.name || "Sem nome",
       },
       {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const status = row.original.status;
+          return (
+            status === "PROCESSED" ? (
+              <Badge className="bg-green-600 hover:bg-green-500 select-none">Processado</Badge>
+            ) : <Badge className="bg-yellow-600 hover:bg-yellow-500 select-none">Pendente</Badge>
+          );
+        }
+      },
+      {
         accessorKey: "user.username",
         header: "Enviado por",
         cell: ({ row }) => (

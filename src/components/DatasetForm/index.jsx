@@ -20,7 +20,7 @@ import { useRef } from "react";
 
 const formSchema = z.object({
   name: z.string().min(3, "Nome deve ter no mínimo 3 caracteres"),
-  description: z.string(),
+  description: z.string().optional(),
   file: z
     .any()
     .refine((files) => files instanceof FileList && files.length > 0, {
